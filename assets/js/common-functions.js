@@ -109,6 +109,14 @@ const ENDEC_MODE_PROFILE_SOURCE = {
         },
         headerBursts: [{ prefix: "", suffix: "" }, { prefix: "", suffix: "" }, { prefix: "", suffix: "" }],
         eomBursts: [{ prefix: "", suffix: "" }, { prefix: "", suffix: "" }, { prefix: "", suffix: "" }]
+    },
+    KR8MER_EAS_STATION_V2: {
+        label: "KR8MER EAS Station V2",
+        signature: { tail: "FF FF FF", lead: "AB on all bursts", burstGapMs: 1000 },
+        betweenGapMs: 1000,
+        afterGapMs: 1000,
+        headerBursts: [{ prefix: "\xAB", suffix: "\xFF\xFF\xFF" }, { prefix: "\xAB", suffix: "\xFF\xFF\xFF" }, { prefix: "\xAB", suffix: "\xFF\xFF\xFF" }],
+        eomBursts: [{ prefix: "\xAB", suffix: "\xFF\xFF\xFF" }, { prefix: "\xAB", suffix: "\xFF\xFF\xFF" }, { prefix: "\xAB", suffix: "\xFF\xFF\xFF" }]
     }
 };
 

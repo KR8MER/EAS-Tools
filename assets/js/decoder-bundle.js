@@ -2203,7 +2203,8 @@ async function fetchAndStore() {
                 validTerminatorFF: 0,
                 terminatorFFRun1: 0,
                 terminatorFFRun3Plus: 0,
-                digitalLeadZero: 0
+                digitalLeadZero: 0,
+                leadingAbTrill: 0
             },
             timing: {
                 samples: 0,
@@ -2483,6 +2484,13 @@ async function fetchAndStore() {
             return buildSameProductAnalysis("TRILITHIC", "strong_trilithic", metrics);
         }
 
+        const strongKR8MER_V2 = markers.leadingAbTrill >= 1
+            && markers.digitalLeadZero === 0
+            && termFFRun3Plus >= 1;
+        if (strongKR8MER_V2) {
+            return buildSameProductAnalysis("KR8MER_EAS_STATION_V2", "strong_kr8mer_v2", metrics);
+        }
+
         const strongDigitalWithLead = markers.digitalLeadZero >= 1
             && (termFFRun3Plus >= 1 || markers.validTerminatorFF >= 2);
         const strongDigitalByFfAndTiming = markers.digitalLeadZero === 0
@@ -2644,6 +2652,10 @@ async function fetchAndStore() {
             return "TRILITHIC";
         }
 
+        const strongKR8MER_V2 = markers.leadingAbTrill >= 1
+            && markers.digitalLeadZero === 0
+            && markers.terminatorFFRun3Plus >= 1;
+
         const digitalEvidence =
             ((markers.digitalLeadZero >= 1) ? 2 : 0) +
             ((markers.preambleRun17Plus >= 1) ? 1 : 0) +
@@ -2699,6 +2711,9 @@ async function fetchAndStore() {
             && timing.trilithicGapHits === 0
             && timing.trilithicAfterGapHits === 0;
 
+        if (strongKR8MER_V2) {
+            return "KR8MER_EAS_STATION_V2";
+        }
         if (strongDigital) {
             return "SAGE DIGITAL 3644";
         }
@@ -2782,13 +2797,16 @@ async function fetchAndStore() {
     }
 
     function noteEndecLeadingByteBeforePreamble(byteValue) {
-        if (byteValue !== 0x00) {
-            return;
-        }
         const characteristics = getEndecCharacteristicsState();
-        characteristics.markers.digitalLeadZero++;
-        addEndecVote("SAGE DIGITAL 3644", 5.5);
-        refreshDetectedEndecMode();
+        if (byteValue === 0x00) {
+            characteristics.markers.digitalLeadZero++;
+            addEndecVote("SAGE DIGITAL 3644", 5.5);
+            refreshDetectedEndecMode();
+        } else if (byteValue === 0xAB) {
+            characteristics.markers.leadingAbTrill++;
+            addEndecVote("KR8MER_EAS_STATION_V2", 4);
+            refreshDetectedEndecMode();
+        }
     }
 
     function noteEndecGapMs(gapMs) {
