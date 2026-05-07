@@ -372,6 +372,46 @@ footer a {
     color: #aaa;
 }
 
+.same-header-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #14171c;
+    border-bottom: 1px solid #2a2e35;
+    font-size: 12px;
+    color: #d0d0d0;
+}
+
+.same-header-label {
+    color: #f0c674;
+    font-weight: bold;
+    flex: 0 0 auto;
+}
+
+.same-header-bar code {
+    flex: 1 1 auto;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-family: "Hack", "Consolas", "Menlo", monospace;
+    color: #b8e8ff;
+}
+
+.same-header-copy-btn {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    font-size: 11px;
+    background: #2a2e35;
+    color: #e8e8e8;
+    border: 1px solid #444;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.same-header-copy-btn:hover {
+    background: #3a3e45;
+}
+
 .impacted-label {
     color: #f0c674;
     font-weight: bold;

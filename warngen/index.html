@@ -121,6 +121,12 @@
                     <div class="panel-label">Fill-ins <span class="panel-hint">(forecaster-supplied values)</span></div>
                     <div id="fillin-list"></div>
                 </div>
+                <div id="same-header-bar" class="same-header-bar" style="display: none;">
+                    <span class="same-header-label">SAME ZCZC:</span>
+                    <code id="same-header-text"></code>
+                    <button type="button" id="same-header-copy-btn" class="same-header-copy-btn"
+                        title="Copy SAME ZCZC header to clipboard">Copy</button>
+                </div>
                 <pre id="output">Draw a polygon on the map to render a bulletin.</pre>
             </div>
         </main>
@@ -133,6 +139,7 @@
         <script src="src/engine/render.js"></script>
         <script src="src/engine/context.js"></script>
         <script src="src/engine/parser.js"></script>
+        <script src="src/engine/same.js"></script>
         <script src="src/geo/intersect.js"></script>
         <script src="src/geo/cities.js"></script>
         <script src="src/geo/highways.js"></script>
@@ -1249,6 +1256,7 @@
                 document.getElementById("output").textContent = "Draw a polygon on the map to render a bulletin.";
                 document.getElementById("impacted-list").textContent = "none (draw a polygon)";
                 rebuildFillInPanel([]);
+                updateSameHeaderDisplay(null);
             }
 
             function clearLocalStorage() {
@@ -1448,6 +1456,7 @@
                             ? "Polygon does not intersect any county. Adjust the polygon to cover at least one county."
                             : "Draw a polygon on the map to render a bulletin.";
                         rebuildFillInPanel([]);
+                        updateSameHeaderDisplay(null);
                         return;
                     }
 
@@ -1609,6 +1618,14 @@
                     var labels = extractFillIns(lastRawOutput);
                     rebuildFillInPanel(labels);
                     applyFillInsAndFormat();
+                    var sameHeader = WarngenSAME.build({
+                        productId: currentProductId,
+                        areas: areas,
+                        issuedDate: issuedDate,
+                        durationMinutes: duration,
+                        vtecOffice: officeMeta.vtecOffice
+                    });
+                    updateSameHeaderDisplay(sameHeader);
                     var dt = (performance.now() - t0).toFixed(1);
 
                     var allCaps = document.getElementById("allcaps-cb").checked;
@@ -1628,6 +1645,7 @@
                 } catch (e) {
                     document.getElementById("output").textContent = "ERROR\n\n" + e.stack;
                     setStatus("Render failed: " + e.message, true);
+                    updateSameHeaderDisplay(null);
                 }
             }
 
@@ -1701,25 +1719,56 @@
                 queueSave();
             });
 
-            document.getElementById("copy-btn").addEventListener("click", function () {
-                var text = document.getElementById("output").textContent || "";
-                var ok = function () { setStatus("Copied " + text.length + " chars to clipboard.", false); };
-                var fail = function (e) { setStatus("Copy failed: " + (e && e.message || e), true); };
+            function updateSameHeaderDisplay(header) {
+                var bar = document.getElementById("same-header-bar");
+                var txt = document.getElementById("same-header-text");
+                if (!bar || !txt) return;
+                if (header) {
+                    txt.textContent = header;
+                    bar.style.display = "flex";
+                } else {
+                    txt.textContent = "";
+                    bar.style.display = "none";
+                }
+            }
+
+            function copyTextToClipboard(text, label) {
+                var ok = function () {
+                    setStatus("Copied " + text.length + " chars to clipboard"
+                        + (label ? " (" + label + ")" : "") + ".", false);
+                };
+                var fail = function (e) {
+                    setStatus("Copy failed: " + (e && e.message || e), true);
+                };
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(text).then(ok).catch(fail);
-                } else {
-                    try {
-                        var ta = document.createElement("textarea");
-                        ta.value = text;
-                        ta.style.position = "fixed";
-                        ta.style.top = "-1000px";
-                        document.body.appendChild(ta);
-                        ta.select();
-                        var success = document.execCommand("copy");
-                        document.body.removeChild(ta);
-                        if (success) ok(); else fail("execCommand returned false");
-                    } catch (e) { fail(e); }
+                    return;
                 }
+                try {
+                    var ta = document.createElement("textarea");
+                    ta.value = text;
+                    ta.style.position = "fixed";
+                    ta.style.top = "-1000px";
+                    document.body.appendChild(ta);
+                    ta.select();
+                    var success = document.execCommand("copy");
+                    document.body.removeChild(ta);
+                    if (success) ok(); else fail("execCommand returned false");
+                } catch (e) { fail(e); }
+            }
+
+            document.getElementById("same-header-copy-btn").addEventListener("click", function () {
+                var text = document.getElementById("same-header-text").textContent || "";
+                if (!text) {
+                    setStatus("No SAME header to copy.", true);
+                    return;
+                }
+                copyTextToClipboard(text, "SAME header");
+            });
+
+            document.getElementById("copy-btn").addEventListener("click", function () {
+                var text = document.getElementById("output").textContent || "";
+                copyTextToClipboard(text);
             });
 
             document.getElementById("download-btn").addEventListener("click", function () {
